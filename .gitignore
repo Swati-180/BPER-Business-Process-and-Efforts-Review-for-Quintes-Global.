@@ -4,3 +4,4 @@ node_modules
 dist
 bper-frontend/node_modules
 bper-frontend/dist
+*.log
