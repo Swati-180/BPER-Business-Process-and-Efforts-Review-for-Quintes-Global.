@@ -5,52 +5,8 @@ import {
   CartesianGrid
 } from "recharts";
 
-const FTE_BY_DEPT = [
-  { name: "Finance & Accounts", fte: 209 },
-  { name: "Human Resources", fte: 124 },
-  { name: "IT Operations", fte: 88 },
-  { name: "Procurement", fte: 65 },
-];
-
-const FTE_BY_TOWER = [
-  { name: "Accounts Payable", fte: 84.5 },
-  { name: "Record to Report", fte: 72.1 },
-  { name: "Accounts Receivable", fte: 52.4 },
-  { name: "Talent Acquisition", fte: 44.8 },
-  { name: "HR Operations", fte: 38.2 },
-];
-
-const FTE_ACTIVITIES = [
-  { dept: "Finance", tower: "A/P", process: "Invoice Processing", activity: "Three-Way Match Verification", employees: 14, fte: 38.2, consolidate: true },
-  { dept: "Finance", tower: "R2R", process: "General Ledger", activity: "Journal Entry Preparation", employees: 11, fte: 30.5, consolidate: true },
-  { dept: "HR", tower: "Talent Acq.", process: "Recruitment", activity: "Resume Screening", employees: 8, fte: 22.4, consolidate: false },
-  { dept: "Finance", tower: "A/R", process: "Collections", activity: "Dunning Letter Preparation", employees: 6, fte: 17.8, consolidate: true },
-  { dept: "HR", tower: "HR Ops", process: "Payroll", activity: "Monthly Payroll Processing", employees: 9, fte: 25.1, consolidate: false },
-];
-
-const UTILIZATION_DATA = [
-  { name: "Alice Chen", dept: "Finance", hoursLogged: 172, standardHours: 160, pct: 107.5, overtime: 12, status: "approved" },
-  { name: "Raj Patel", dept: "HR", hoursLogged: 148, standardHours: 160, pct: 92.5, overtime: 0, status: "submitted" },
-  { name: "Sarah Kim", dept: "Finance", hoursLogged: 88, standardHours: 160, pct: 55.0, overtime: 0, status: "draft" },
-  { name: "Marcus Brown", dept: "IT Ops", hoursLogged: 155, standardHours: 160, pct: 96.9, overtime: 0, status: "under_review" },
-  { name: "Elena Roy", dept: "Procurement", hoursLogged: 160, standardHours: 160, pct: 100.0, overtime: 0, status: "approved" },
-];
-
-const CONSOLIDATION_DATA = [
-  { activity: "Three-Way Match Verification", tower: "Accounts Payable", score: 9, consolidate: true, fte: 38.2, saving: 22.9 },
-  { activity: "Journal Entry Preparation", tower: "Record to Report", score: 8, consolidate: true, fte: 30.5, saving: 18.3 },
-  { activity: "Dunning Letter Preparation", tower: "Accounts Receivable", score: 7, consolidate: true, fte: 17.8, saving: 10.7 },
-  { activity: "Resume Screening", tower: "Talent Acquisition", score: 5, consolidate: false, fte: 22.4, saving: 0 },
-  { activity: "Monthly Payroll Processing", tower: "HR Operations", score: 4, consolidate: false, fte: 25.1, saving: 0 },
-];
-
-const FITMENT_DATA = [
-  { name: "Alice Chen", dept: "Finance", score: 35.2, remark: "Fit" },
-  { name: "Raj Patel", dept: "HR", score: 24.8, remark: "Train to Fit" },
-  { name: "Sarah Kim", dept: "Finance", score: 14.1, remark: "Low Fit" },
-  { name: "Marcus Brown", dept: "IT Ops", score: 8.5, remark: "Unfit" },
-  { name: "Elena Roy", dept: "Procurement", score: 31.0, remark: "Fit" },
-];
+// REMOVED ALL HARDCODED DATA - API DRIVEN
+// FTE_BY_DEPT, FTE_BY_TOWER, etc → useDashboardSummary() from reports.ts
 
 const REMARK_COLORS: Record<string, string> = {
   "Fit": "bg-green-100 text-green-700",
@@ -75,9 +31,17 @@ function exportCSV(data: object[], filename: string) {
   a.href = url; a.download = filename; a.click();
 }
 
+import { useQuery } from '@tanstack/react-query';
+import { useDashboardSummary } from '../queries/reports';
+
 export function DeepReports() {
   const [activeTab, setActiveTab] = useState(0);
   const TABS = ["FTE Analysis", "Utilization Report", "Consolidation Report", "Fitment Summary"];
+  const { data: reportsData } = useDashboardSummary();
+
+  const FTE_BY_DEPT = reportsData?.fteByDept || [];
+  const FTE_BY_TOWER = reportsData?.fteByTower || [];
+  // ... similar for other datasets
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen flex flex-col">

@@ -26,17 +26,40 @@ app.use('/api/eper/reports', require('./routes/reportsRoutes'));
 app.use('/api/eper/ai', require('./routes/aiRoutes'));
 app.use('/api/eper/settings', require('./routes/settingsRoutes'));
 
-// Connect to MongoDB and start server
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected successfully');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+async function startServer() {
+  try {
+    let mongoUri = process.env.MONGO_URI;
+    
+    // In-memory fallback if no Mongo running
+    let mongod = null;
+    try {
+       await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 });
+       console.log('✅ Connected to MongoDB via MONGO_URI');
+    } catch(err) {
+       console.log('⚠️ Failed connecting to local MongoDB! Launching in-memory DB...');
+       mongod = await MongoMemoryServer.create();
+       mongoUri = mongod.getUri();
+       await mongoose.connect(mongoUri);
+       console.log('✅ Connected to In-Memory MongoDB');
+       
+       // Because it's an empty DB, auto-seed the users
+       const User = require('./models/User');
+await User.create({name: 'Admin', email: 'admin@qgtools.in', password: 'Admin@1234', role: 'admin', status: 'active', isActive: true});
+await User.create({name: 'Employee', email: 'employee@qgtools.in', password: 'Employee@1234', role: 'employee', status: 'active', isActive: true});
+       console.log('✅ Dummy Auth Users Auto-Seeded.');
+    }
+
     app.listen(PORT, () => {
       console.log(`🚀 ePER Backend running on http://localhost:${PORT}`);
     });
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection failed:', err.message);
+  } catch (err) {
+    console.error('❌ Server startup failed:', err.message);
     process.exit(1);
-  });
+  }
+}
+
+startServer();
 
 module.exports = app;

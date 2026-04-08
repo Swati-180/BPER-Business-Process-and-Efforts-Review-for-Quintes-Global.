@@ -8,13 +8,16 @@ import {
   ShieldAlert, 
   LogOut 
 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
-interface EmployeeSidebarProps {
-  activePage: string;
-  setActivePage: (page: string) => void;
-}
+export function EmployeeSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout, user } = useAuth();
+  
+  const activePage = location.pathname.split('/').pop();
 
-export function EmployeeSidebar({ activePage, setActivePage }: EmployeeSidebarProps) {
   return (
     <div className="w-64 bg-corporateBlue-dark min-h-screen flex flex-col fixed left-0 top-0 text-slate-300 z-50">
       {/* Brand Header */}
@@ -39,7 +42,7 @@ export function EmployeeSidebar({ activePage, setActivePage }: EmployeeSidebarPr
         <ul className="space-y-1">
           <li>
             <button
-              onClick={() => setActivePage("dashboard")}
+              onClick={() => navigate("/dashboard")}
               className={`w-full flex items-center gap-3 px-6 py-3 transition-colors text-sm ${
                 activePage === "dashboard"
                   ? "bg-corporateBlue text-white border-l-0 rounded-r-full font-bold ml-0 mr-4"
@@ -52,9 +55,9 @@ export function EmployeeSidebar({ activePage, setActivePage }: EmployeeSidebarPr
           </li>
           <li>
             <button
-              onClick={() => setActivePage("wizard")}
+              onClick={() => navigate("/wizard")}
               className={`w-full flex items-center gap-3 px-6 py-3 transition-colors text-sm ${
-                activePage === "wizard" || activePage === "bperStatus"
+                activePage === "wizard" || activePage === "bper-status"
                   ? "bg-corporateBlue text-white border-l-0 rounded-r-full font-bold ml-0 mr-4 shadow-sm"
                   : "text-slate-400 hover:text-white hover:bg-white/5 font-medium"
               }`}
@@ -65,7 +68,12 @@ export function EmployeeSidebar({ activePage, setActivePage }: EmployeeSidebarPr
           </li>
           <li>
              <button
-              className="w-full flex items-center gap-3 px-6 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-colors text-sm font-medium"
+              onClick={() => navigate("/bper-status")}
+              className={`w-full flex items-center gap-3 px-6 py-3 transition-colors text-sm ${
+                activePage === "bper-status"
+                  ? "bg-corporateBlue text-white border-l-0 rounded-r-full font-bold ml-0 mr-4 shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/5 font-medium"
+              }`}
             >
               <History size={18} />
               History
@@ -100,14 +108,16 @@ export function EmployeeSidebar({ activePage, setActivePage }: EmployeeSidebarPr
 
       {/* Bottom Actions */}
       <div className="p-6 space-y-1 mb-2 border-t border-white/10 mt-auto pt-6">
-        <button 
-          onClick={() => setActivePage("dashboard")} // Switching to admin equivalent
-          className="w-full flex items-center gap-3 py-2 px-1 text-slate-400 hover:text-white transition-colors text-sm font-medium"
-        >
-          <ShieldAlert size={18} />
-          Admin Console
-        </button>
-        <button className="w-full flex items-center gap-3 py-2 px-1 text-slate-400 hover:text-white transition-colors text-sm font-medium">
+        {user?.role === 'admin' && (
+          <button 
+            onClick={() => navigate("/client-manager/dashboard")}
+            className="w-full flex items-center gap-3 py-2 px-1 text-slate-400 hover:text-white transition-colors text-sm font-medium"
+          >
+            <ShieldAlert size={18} />
+            Admin Console
+          </button>
+        )}
+        <button onClick={logout} className="w-full flex items-center gap-3 py-2 px-1 text-slate-400 hover:text-white transition-colors text-sm font-medium">
           <LogOut size={18} />
           Logout
         </button>

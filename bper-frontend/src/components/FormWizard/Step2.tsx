@@ -1,77 +1,73 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, Plus, Trash2, Box, Settings2, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Box, Settings2, HelpCircle, Sparkles, X } from "lucide-react";
+import axios from "axios";
+import { useAuth } from "../../contexts/AuthContext";
+import { useFormContext, useFieldArray } from "react-hook-form";
 
 interface StepProps {
   onNext: () => void;
   onPrev: () => void;
 }
 
-interface ProcessRowData {
-  id: number;
-  majorProcess: string;
-  process: string;
-  subProcess: string;
-  frequency: string;
-  vol: number;
-  hrs: number;
-  appUsed: string;
-}
-
-interface MiscTaskData {
-  id: number;
-  description: string;
-  hrs: number;
-}
-
 export function Step2({ onNext, onPrev }: StepProps) {
-  const [processRows, setProcessRows] = useState<ProcessRowData[]>([
-    { id: 1, majorProcess: 'Commercial L', process: 'Underwriting', subProcess: 'Risk Assessmen', frequency: 'Daily', vol: 150, hrs: 45, appUsed: 'Salesforce, Excel' },
-    { id: 2, majorProcess: 'Customer Sup', process: 'Inbound Querie', subProcess: 'Technical Help', frequency: 'Daily', vol: 420, hrs: 120, appUsed: 'Zendesk' },
-  ]);
+  const { user } = useAuth();
+  const { control, register, setValue, watch } = useFormContext();
 
-  const [miscRows, setMiscRows] = useState<MiscTaskData[]>([
-    { id: 1, description: '', hrs: 0 }
-  ]);
+  const { fields: processRows, append: appendProcess, remove: removeProcess } = useFieldArray({
+    control,
+    name: "processRows"
+  });
+
+  const { fields: miscRows, append: appendMisc, remove: removeMisc } = useFieldArray({
+    control,
+    name: "miscRows"
+  });
 
   const [standardHours, setStandardHours] = useState<number>(160);
   const [isEditingStd, setIsEditingStd] = useState(false);
 
   useEffect(() => {
-    // Fetch standard hours from API
-    // fetch("/api/eper/settings/standardHours")
-    //   .then(res => res.json())
-    //   .then(data => setStandardHours(data.value || 160))
-    //   .catch(() => setStandardHours(160));
+    // Optionally fetch std hours here
   }, []);
 
-  const totalProcessHours = processRows.reduce((acc, row) => acc + (row.hrs || 0), 0);
-  const totalMiscHours = miscRows.reduce((acc, row) => acc + (row.hrs || 0), 0);
+  const watchProcessRows = watch("processRows", []);
+  const watchMiscRows = watch("miscRows", []);
+
+  const totalProcessHours = watchProcessRows.reduce((acc: number, row: any) => acc + (Number(row.hrs) || 0), 0);
+  const totalMiscHours = watchMiscRows.reduce((acc: number, row: any) => acc + (Number(row.hrs) || 0), 0);
   const aggregateMonthlyEffort = totalProcessHours + totalMiscHours;
   const utilization = standardHours > 0 ? (aggregateMonthlyEffort / standardHours) * 100 : 0;
 
   const addProcessRow = () => {
-    setProcessRows([...processRows, { id: Date.now(), majorProcess: 'Select...', process: 'Select...', subProcess: 'Select...', frequency: 'Daily', vol: 0, hrs: 0, appUsed: '' }]);
+    appendProcess({ majorProcess: 'Select...', process: 'Select...', subProcess: 'Select...', frequency: 'Daily', vol: 0, hrs: 0, appUsed: '' });
   };
-
-  const removeProcessRow = (id: number) => {
-    setProcessRows(processRows.filter(r => r.id !== id));
-  };
-  
-  const updateProcessRow = (id: number, field: keyof ProcessRowData, value: string | number) => {
-    setProcessRows(processRows.map(row => row.id === id ? { ...row, [field]: value } : row));
-  }
 
   const addMiscRow = () => {
-    setMiscRows([...miscRows, { id: Date.now(), description: '', hrs: 0 }]);
+    appendMisc({ description: '', hrs: 0, isMapping: false, aiSuggestion: null });
   };
 
-  const removeMiscRow = (id: number) => {
-    setMiscRows(miscRows.filter(r => r.id !== id));
+  const mapActivityWithAI = async (index: number, description: string) => {
+    if (!description.trim() || !user?.department?._id) return;
+    
+    setValue(`miscRows.${index}.isMapping`, true);
+    try {
+      const res = await axios.post("/api/eper/ai/map-activity", {
+        customText: description,
+        departmentId: user?.department?._id
+      });
+      setValue(`miscRows.${index}.aiSuggestion`, res.data);
+    } catch (err) {
+      console.error("AI mapping error");
+    } finally {
+      setValue(`miscRows.${index}.isMapping`, false);
+    }
   };
-  
-  const updateMiscRow = (id: number, field: keyof MiscTaskData, value: string | number) => {
-    setMiscRows(miscRows.map(row => row.id === id ? { ...row, [field]: value } : row));
-  }
+
+  const acceptAiSuggestion = (index: number, matchedName: string) => {
+    const desc = watchMiscRows[index].description;
+    setValue(`miscRows.${index}.description`, `[AI Mapped: ${matchedName}] - ${desc}`);
+    setValue(`miscRows.${index}.aiSuggestion`, null);
+  };
 
   return (
     <div className="bg-white rounded-b-xl border-x border-b border-slate-200 shadow-sm font-sans flex flex-col">
@@ -99,26 +95,17 @@ export function Step2({ onNext, onPrev }: StepProps) {
               </tr>
             </thead>
             <tbody>
-              {processRows.map((row) => (
+              {processRows.map((row, index) => (
                 <tr key={row.id} className="border-b border-slate-100 last:border-0">
                   <td className="py-4 px-2">
-                    <select 
-                      className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-700 outline-none focus:border-corporateBlue appearance-none"
-                      value={row.majorProcess}
-                      onChange={(e) => updateProcessRow(row.id, 'majorProcess', e.target.value)}
-                    >
-                      <option>{row.majorProcess !== 'Select...' ? row.majorProcess : 'Select...'}</option>
-                      <option>Commercial L</option>
-                      <option>Customer Sup</option>
-                    </select>
+                      <SelectField name={`processRows.${index}.majorProcess`} label="Major Process" options={departments} />
                   </td>
                   <td className="py-4 px-2">
                     <select 
                       className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-700 outline-none focus:border-corporateBlue appearance-none"
-                      value={row.process}
-                      onChange={(e) => updateProcessRow(row.id, 'process', e.target.value)}
+                      {...register(`processRows.${index}.process`)}
                     >
-                      <option>{row.process !== 'Select...' ? row.process : 'Select...'}</option>
+                      <option>Select...</option>
                       <option>Underwriting</option>
                       <option>Inbound Querie</option>
                     </select>
@@ -126,10 +113,9 @@ export function Step2({ onNext, onPrev }: StepProps) {
                   <td className="py-4 px-2">
                     <select 
                       className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-700 outline-none focus:border-corporateBlue appearance-none"
-                      value={row.subProcess}
-                      onChange={(e) => updateProcessRow(row.id, 'subProcess', e.target.value)}
+                      {...register(`processRows.${index}.subProcess`)}
                     >
-                      <option>{row.subProcess !== 'Select...' ? row.subProcess : 'Select...'}</option>
+                      <option>Select...</option>
                       <option>Risk Assessmen</option>
                       <option>Technical Help</option>
                     </select>
@@ -137,8 +123,7 @@ export function Step2({ onNext, onPrev }: StepProps) {
                   <td className="py-4 px-2">
                     <select 
                       className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-700 outline-none focus:border-corporateBlue appearance-none"
-                      value={row.frequency}
-                      onChange={(e) => updateProcessRow(row.id, 'frequency', e.target.value)}
+                      {...register(`processRows.${index}.frequency`)}
                     >
                       <option>Daily</option>
                       <option>Weekly</option>
@@ -146,19 +131,17 @@ export function Step2({ onNext, onPrev }: StepProps) {
                     </select>
                   </td>
                   <td className="py-4 px-2 text-center">
-                    <input 
+                      <input 
                       type="number" 
-                      className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-center text-sm text-slate-700 outline-none focus:border-corporateBlue" 
-                      value={row.vol || ''}
-                      onChange={(e) => updateProcessRow(row.id, 'vol', Number(e.target.value))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-center text-sm text-slate-700 outline-none focus:border-corporateBlue [&:invalid]:border-red-300 [&:invalid]:bg-red-50" 
+                      {...register(`processRows.${index}.vol`, { valueAsNumber: true })}
                     />
                   </td>
                   <td className="py-4 px-2 text-center">
-                    <input 
+                      <input 
                       type="number" 
-                      className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-center text-sm font-bold text-corporateBlue outline-none focus:border-corporateBlue" 
-                      value={row.hrs || ''}
-                      onChange={(e) => updateProcessRow(row.id, 'hrs', Number(e.target.value))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-center text-sm font-bold text-corporateBlue outline-none focus:border-corporateBlue [&:invalid]:border-red-300 [&:invalid]:bg-red-50" 
+                      {...register(`processRows.${index}.hrs`, { valueAsNumber: true })}
                     />
                   </td>
                   <td className="py-4 px-2">
@@ -166,12 +149,11 @@ export function Step2({ onNext, onPrev }: StepProps) {
                       type="text" 
                       className="w-full bg-slate-50 border border-slate-200 rounded p-3 text-sm text-slate-700 outline-none focus:border-corporateBlue" 
                       placeholder="e.g. Workday"
-                      value={row.appUsed}
-                      onChange={(e) => updateProcessRow(row.id, 'appUsed', e.target.value)}
+                      {...register(`processRows.${index}.appUsed`)}
                     />
                   </td>
                   <td className="py-4 pl-2 text-right">
-                    <button onClick={() => removeProcessRow(row.id)} className="text-slate-400 hover:text-red-500 transition-colors p-1">
+                    <button onClick={() => removeProcess(index)} className="text-slate-400 hover:text-red-500 transition-colors p-1">
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -205,34 +187,69 @@ export function Step2({ onNext, onPrev }: StepProps) {
             </div>
             
             <div className="space-y-3">
-              {miscRows.map((row) => (
-                <div key={row.id} className="flex gap-4 items-start">
-                  <div className="flex-1">
-                     <textarea 
-                        className="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 outline-none focus:border-corporateBlue resize-none shadow-sm h-16"
-                        placeholder="Ad-hoc meetings, administrative filing, or unique seasonal tasks..."
-                        value={row.description}
-                        onChange={(e) => updateMiscRow(row.id, 'description', e.target.value)}
-                     ></textarea>
-                  </div>
-                  <div className="w-48 flex items-start gap-4">
-                     <div className="relative w-full">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-corporateBlue opacity-50">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              {miscRows.map((row, index) => {
+                const currentRow = watchMiscRows[index] || {};
+                return (
+                  <div key={row.id} className="flex flex-col gap-2 mb-4">
+                    <div className="flex gap-4 items-start">
+                      <div className="flex-1 relative">
+                        <textarea 
+                            className="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm text-slate-700 outline-none focus:border-corporateBlue resize-none shadow-sm h-16"
+                            placeholder="Ad-hoc meetings, administrative filing, or unique seasonal tasks... (Click outside to AI Map)"
+                            {...register(`miscRows.${index}.description`)}
+                            onBlur={(e) => mapActivityWithAI(index, e.target.value)}
+                        ></textarea>
+                        {currentRow.isMapping && (
+                          <div className="absolute top-4 right-4 text-corporateBlue bg-blue-50 px-2 py-1 rounded animate-pulse flex items-center gap-1 text-xs font-bold">
+                            <Sparkles size={14} /> Analyzing...
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-48 flex items-start gap-4">
+                        <div className="relative w-full">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-corporateBlue opacity-50">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <input 
+                              type="number" 
+                              className="w-full bg-white border border-slate-200 rounded-lg p-4 pl-12 text-lg font-bold text-slate-900 outline-none focus:border-corporateBlue shadow-sm h-16" 
+                              {...register(`miscRows.${index}.hrs`, { valueAsNumber: true })}
+                            />
                         </div>
-                        <input 
-                           type="number" 
-                           className="w-full bg-white border border-slate-200 rounded-lg p-4 pl-12 text-lg font-bold text-slate-900 outline-none focus:border-corporateBlue shadow-sm h-16" 
-                           value={row.hrs || ''}
-                           onChange={(e) => updateMiscRow(row.id, 'hrs', Number(e.target.value))}
-                        />
-                     </div>
-                     <button onClick={() => removeMiscRow(row.id)} className="text-slate-400 hover:text-red-500 transition-colors mt-5 p-1 shrink-0">
-                        <Trash2 size={20} />
-                     </button>
+                        <button onClick={() => removeMisc(index)} className="text-slate-400 hover:text-red-500 transition-colors mt-5 p-1 shrink-0">
+                            <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+                    {/* AI Suggestion UI */}
+                    {currentRow.aiSuggestion && currentRow.aiSuggestion.matchedActivity && (
+                      <div className="ml-1 flex items-start gap-3 bg-indigo-50 border border-indigo-100 p-3 rounded-lg mr-[14rem]">
+                        <Sparkles size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold text-indigo-900">AI Suggested Mapping:</span>
+                            <span className="text-sm font-semibold text-indigo-700">{currentRow.aiSuggestion.matchedActivity.name}</span>
+                            {currentRow.aiSuggestion.confidence === 'high' && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase">High Match</span>}
+                            {currentRow.aiSuggestion.confidence === 'medium' && <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase">Med Match</span>}
+                            {currentRow.aiSuggestion.confidence === 'low' && <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold uppercase">Low Match</span>}
+                          </div>
+                          <p className="text-xs text-indigo-600 mb-2">{currentRow.aiSuggestion.reason}</p>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => acceptAiSuggestion(index, currentRow.aiSuggestion!.matchedActivity!.name)} className="text-xs font-bold bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition">Accept Suggestion</button>
+                            <button onClick={() => setValue(`miscRows.${index}.aiSuggestion`, null)} className="text-xs font-bold text-indigo-600 bg-white border border-indigo-200 px-3 py-1.5 rounded hover:bg-indigo-50 transition">Dismiss</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {currentRow.aiSuggestion && !currentRow.aiSuggestion.matchedActivity && (
+                      <div className="ml-1 flex items-center gap-2 text-xs font-medium text-slate-500 mr-[14rem] px-3 py-1">
+                        <Sparkles size={12} /> No strong AI matches found in standard inventory.
+                        <button onClick={() => setValue(`miscRows.${index}.aiSuggestion`, null)} className="ml-2 hover:text-slate-700"><X size={12}/></button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           

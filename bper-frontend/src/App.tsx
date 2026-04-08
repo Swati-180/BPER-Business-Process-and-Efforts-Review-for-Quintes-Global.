@@ -1,57 +1,74 @@
-import { useState } from "react";
-import { Sidebar } from "./components/Sidebar";
-import { TopNav } from "./components/TopNav";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Dashboard } from "./components/Dashboard";
 import { FormWizard } from "./components/FormWizard/FormWizard";
 import { ProcessAnalytics } from "./components/ProcessAnalytics";
 import { AdminUsers } from "./components/AdminUsers";
 import { BperFormStatus } from "./components/BperFormStatus";
-import { EmployeeSidebar } from "./components/EmployeeSidebar";
 import { Employee360 } from "./components/Employee360";
-
-// New pages
 import { EperDashboard } from "./components/EperDashboard";
 import { WdtReview } from "./components/WdtReview";
 import { SixBySixScoring } from "./components/SixBySixScoring";
 import { FitmentScoring } from "./components/FitmentScoring";
 import { DeepReports } from "./components/DeepReports";
+import { Login } from "./components/Login";
+import { Register } from "./components/RequestAccess";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { useAuth } from "./contexts/AuthContext";
+import { EmployeeLayout } from "./components/EmployeeLayout";
+import { AdminLayout } from "./components/AdminLayout";
+import { LoadingSpinner } from "./components/ui/LoadingSpinner";
 
 function App() {
-  const [activePage, setActivePage] = useState("eperDashboard");
+  const { isLoading } = useAuth();
 
-  const isEmployeePortal = activePage === "bperStatus" || activePage === "wizard";
-
-  // Pages that don't need the TopNav
-  const noTopNav = ["fitmentScoring", "eperDashboard", "users", "fitment", "wdtReview", "sixbySixScoring", "deepReports", "employee360"];
-  const showTopNav = !isEmployeePortal && !noTopNav.includes(activePage);
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <div className="flex bg-slate-100 min-h-screen font-sans">
-      {isEmployeePortal ? (
-        <EmployeeSidebar activePage={activePage} setActivePage={setActivePage} />
-      ) : (
-        <Sidebar activePage={activePage} setActivePage={setActivePage} />
-      )}
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Navigate to="/bper/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/unauthorized" element={<div className="min-h-screen flex items-center justify-center"><div className="text-center"><h1 className="text-2xl font-bold text-red-600">Access Denied</h1><p className="text-gray-600 mt-2">You don't have permission to access this page.</p><a href="/login" className="text-blue-600 hover:underline mt-4 inline-block">Go to Login</a></div></div>} />
 
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        {showTopNav && <TopNav />}
+      {/* Employee Routes */}
+      <Route
+        path="/bper"
+        element={
+          <ProtectedRoute requiredRole="employee">
+            <EmployeeLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="status" element={<BperFormStatus />} />
+        <Route path="wizard" element={<FormWizard />} />
+      </Route>
 
-        {/* Existing pages */}
-        {activePage === "dashboard" && <Dashboard />}
-        {activePage === "wizard" && <FormWizard />}
-        {activePage === "analytics" && <ProcessAnalytics />}
-        {activePage === "employee360" && <Employee360 />}
-        {activePage === "users" && <AdminUsers />}
-        {activePage === "bperStatus" && <BperFormStatus />}
+      {/* Admin Routes */}
+      <Route
+        path="/client-manager"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<EperDashboard />} />
+        <Route path="analytics" element={<ProcessAnalytics />} />
+        <Route path="employee360" element={<Employee360 />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="wdt-review" element={<WdtReview />} />
+        <Route path="sixbysix" element={<SixBySixScoring />} />
+        <Route path="fitment" element={<FitmentScoring />} />
+        <Route path="reports" element={<DeepReports />} />
+      </Route>
 
-        {/* New ePER pages */}
-        {activePage === "eperDashboard" && <EperDashboard setActivePage={setActivePage} />}
-        {activePage === "wdtReview" && <WdtReview />}
-        {activePage === "sixbySixScoring" && <SixBySixScoring />}
-        {activePage === "fitmentScoring" && <FitmentScoring />}
-        {activePage === "deepReports" && <DeepReports />}
-      </div>
-    </div>
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/bper/dashboard" replace />} />
+    </Routes>
   );
 }
 

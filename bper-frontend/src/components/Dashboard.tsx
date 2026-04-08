@@ -3,10 +3,30 @@ import {
   ArrowRight, 
   Eye,
   HelpCircle,
-  ExternalLink 
+  ExternalLink,
+  Plus
 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useMySubmissions } from "../queries/form";
+import { SubmissionTimer } from "./SubmissionTimer";
+import { LoadingSpinner, ErrorState } from "./ui";
 
 export function Dashboard() {
+  const { data: submissions, isLoading, isError, refetch } = useMySubmissions();
+  const navigate = useNavigate();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (isError) return <ErrorState onRetry={refetch} />;
+
+  const currentSubmission = submissions?.[0]; // Assuming ordered by latest
+  const statusStr = currentSubmission?.status === 'submitted' ? 'Submitted' 
+                  : currentSubmission?.status === 'under_review' ? 'Under Review'
+                  : currentSubmission?.status === 'approved' ? 'Approved'
+                  : currentSubmission?.status === 'returned_for_revision' ? 'Returned'
+                  : 'Not Started';
+
+  const isComplete = ['submitted', 'under_review', 'approved'].includes(currentSubmission?.status);
+
   return (
     <main className="flex-1 p-8 pb-12 max-w-6xl mx-auto w-full">
       {/* Header */}
@@ -29,40 +49,37 @@ export function Dashboard() {
         <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
           <div className="flex justify-between items-start mb-6">
             <span className="inline-block bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-              Draft
+              {statusStr}
             </span>
             <div className="bg-slate-50 text-corporateBlue p-3 rounded-lg shadow-sm border border-slate-100">
               <ClipboardList size={24} />
             </div>
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-1">BPER Form Status</h3>
-          <p className="text-sm text-slate-500 mb-8">Current Period: Jan 1 - Mar 31, 2026</p>
+          <p className="text-sm text-slate-500 mb-8">Latest Entry</p>
           
           <div className="mt-auto flex items-end justify-between">
             <div>
-              <div className="text-5xl font-extrabold text-slate-900 leading-none mb-2">Not<br/>Started</div>
-              <p className="text-sm text-slate-500">Required efforts are pending<br/>submission.</p>
+              <div className="text-5xl font-extrabold text-slate-900 leading-none mb-2">{statusStr === 'Not Started' ? 'Draft' : 'Saved'}</div>
+              <p className="text-sm text-slate-500">{isComplete ? 'Submission successfully recorded.' : 'Required efforts are pending submission.'}</p>
             </div>
-            <button className="bg-corporateBlue hover:bg-corporateBlue-light text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
-              Start<br/>Form
-              <ArrowRight size={18} />
-            </button>
+            {!isComplete && (
+              <button onClick={() => navigate('/wizard')} className="bg-corporateBlue hover:bg-corporateBlue-light text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                Start<br/>Form
+                <ArrowRight size={18} />
+              </button>
+            )}
+            {isComplete && (
+               <button onClick={() => navigate('/bper-status')} className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                View<br/>Status
+                <ArrowRight size={18} />
+              </button>
+            )}
           </div>
         </div>
 
         {/* Countdown Card */}
-        <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-          <h3 className="text-sm font-bold text-amber-600 tracking-widest uppercase mb-8">Q1 2026 Countdown</h3>
-          
-          <div className="relative w-32 h-32 mb-6 flex flex-col items-center justify-center">
-            <div className="absolute inset-0 border-4 border-amber-600 rounded-2xl rotate-45 transform scale-90 opacity-90 transition-transform hover:scale-100 duration-500"></div>
-            <div className="absolute inset-0 bg-amber-50 rounded-2xl rotate-45 transform scale-[0.85] -z-10"></div>
-            <span className="text-5xl font-extrabold text-slate-900 z-10 relative">15</span>
-          </div>
-          
-          <p className="text-2xl font-bold text-slate-900 mb-2">Days Remaining</p>
-          <p className="text-sm text-slate-500">Submission Deadline:<br/>April 15</p>
-        </div>
+        <SubmissionTimer />
 
         {/* Compliance Card */}
         <div className="bg-corporateBlue-dark rounded-xl p-8 shadow-md text-white flex flex-col relative overflow-hidden">
@@ -106,36 +123,31 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm text-slate-700">
-              <tr className="bg-white shadow-sm border border-slate-100 rounded-lg group">
-                <td className="px-6 py-5 font-bold text-slate-900 rounded-l-lg">#Q4-2025-092</td>
-                <td className="px-6 py-5 text-slate-600">Oct 1 - Dec 31, 2025</td>
-                <td className="px-6 py-5">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 uppercase tracking-wide">
-                    Approved
-                  </span>
-                </td>
-                <td className="px-6 py-5 text-slate-600">Jan 12, 2026</td>
-                <td className="px-6 py-5 rounded-r-lg text-center">
-                  <button className="text-slate-400 hover:text-corporateBlue transition-colors inline-block" title="View">
-                    <Eye size={18} />
-                  </button>
-                </td>
-              </tr>
-              <tr className="bg-white shadow-sm border border-slate-100 rounded-lg group">
-                <td className="px-6 py-5 font-bold text-slate-900 rounded-l-lg">#Q3-2025-144</td>
-                <td className="px-6 py-5 text-slate-600">Jul 1 - Sep 30, 2025</td>
-                <td className="px-6 py-5">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200 uppercase tracking-wide">
-                    Approved
-                  </span>
-                </td>
-                <td className="px-6 py-5 text-slate-600">Oct 05, 2025</td>
-                <td className="px-6 py-5 rounded-r-lg text-center">
-                  <button className="text-slate-400 hover:text-corporateBlue transition-colors inline-block" title="View">
-                    <Eye size={18} />
-                  </button>
-                </td>
-              </tr>
+              {submissions?.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                    No submissions found.
+                  </td>
+                </tr>
+              ) : (
+                submissions?.map((sub: any) => (
+                  <tr key={sub._id} className="bg-white shadow-sm border border-slate-100 rounded-lg group">
+                    <td className="px-6 py-5 font-bold text-slate-900 rounded-l-lg">#{sub._id.slice(-6).toUpperCase()}</td>
+                    <td className="px-6 py-5 text-slate-600">{sub.month} {sub.year}</td>
+                    <td className="px-6 py-5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 uppercase tracking-wide">
+                        {sub.status.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 text-slate-600">{new Date(sub.updatedAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-5 rounded-r-lg text-center">
+                      <Link to={`/bper-status?id=${sub._id}`} className="text-slate-400 hover:text-corporateBlue transition-colors inline-block" title="View">
+                        <Eye size={18} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

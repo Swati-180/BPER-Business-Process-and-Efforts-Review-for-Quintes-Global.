@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter, Save, RotateCcw, ChevronDown } from "lucide-react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 type Rating = "H" | "M" | "L" | "";
 
@@ -24,12 +27,7 @@ interface ActivityRow {
   comments: string;
 }
 
-const INITIAL_ROWS: ActivityRow[] = [
-  { id: 1, name: "Invoice Processing – APAC", tower: "Accounts Payable", multipleLocns: "M", routine: "H", volumes: "H", manpower: "L", sops: "M", erpTechnology: "M", sensitivity: "L", criticality: "M", controls: "L", proximity: "H", regulatory: "M", skill: "L", comments: "" },
-  { id: 2, name: "Bank Reconciliation – US Market", tower: "Record to Report", multipleLocns: "L", routine: "L", volumes: "L", manpower: "L", sops: "L", erpTechnology: "L", sensitivity: "H", criticality: "H", controls: "M", proximity: "L", regulatory: "H", skill: "H", comments: "" },
-  { id: 3, name: "Vendor Onboarding", tower: "Accounts Payable", multipleLocns: "H", routine: "H", volumes: "M", manpower: "H", sops: "H", erpTechnology: "H", sensitivity: "L", criticality: "L", controls: "L", proximity: "L", regulatory: "M", skill: "L", comments: "" },
-  { id: 4, name: "Payroll Processing – India", tower: "HR Operations", multipleLocns: "H", routine: "H", volumes: "H", manpower: "H", sops: "H", erpTechnology: "H", sensitivity: "L", criticality: "L", controls: "L", proximity: "L", regulatory: "L", skill: "L", comments: "" },
-];
+// const INITIAL_ROWS: ActivityRow[] = [...] - REMOVED - now API driven
 
 function calcScore(row: ActivityRow): { perf: number; char: number; total: number; consolidate: boolean } {
   const perfKeys: (keyof ActivityRow)[] = ["multipleLocns", "routine", "volumes", "manpower", "sops", "erpTechnology"];
@@ -56,7 +54,16 @@ const RatingCell = ({
 );
 
 export function SixBySixScoring() {
-  const [rows, setRows] = useState<ActivityRow[]>(INITIAL_ROWS);
+  const [rows, setRows] = useState<ActivityRow[]>([]);
+
+  const { data: apiRows } = useQuery({
+    queryKey: ['sixBySix'],
+    queryFn: () => api.get('/api/eper/sixbysix/scores').then(res => res.data)
+  });
+
+  useEffect(() => {
+    if (apiRows) setRows(apiRows);
+  }, [apiRows]);
   const [selected, setSelected] = useState<number[]>([]);
   const [bulkVal, setBulkVal] = useState<Rating>("L");
   const [saved, setSaved] = useState(false);
@@ -82,9 +89,15 @@ export function SixBySixScoring() {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const queryClient = useQueryClient();
+  const handleSave = async () => {
+    try {
+      await api.post('/api/eper/sixbysix/save', { rows });
+      toast.success('Scores saved!');
+      queryClient.invalidateQueries({ queryKey: ['sixBySix'] });
+    } catch (err) {
+      toast.error('Save failed');
+    }
   };
 
   const scored = rows.filter(r => calcScore(r).total > 0).length;

@@ -1,4 +1,5 @@
 import { ArrowRight, ArrowLeft } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface StepProps {
   onNext: () => void;
@@ -6,6 +7,7 @@ interface StepProps {
 }
 
 export function Step1({ onNext, onPrev }: StepProps) {
+  const { user } = useAuth();
   return (
     <div className="bg-white rounded-b-xl border-x border-b border-slate-200 shadow-sm p-10 font-sans">
       <div className="mb-10">
@@ -21,14 +23,14 @@ export function Step1({ onNext, onPrev }: StepProps) {
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Employee ID</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">🛡️</div>
-            <p className="font-bold text-lg text-slate-900">BPER-7729-QX</p>
+            <p className="font-bold text-lg text-slate-900">BPER-{user?._id?.slice(-4)?.toUpperCase() || '7729'}</p>
           </div>
         </div>
         <div>
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Name</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">👤</div>
-            <p className="font-bold text-lg text-slate-900">Jonathan Vance-Sterling</p>
+            <p className="font-bold text-lg text-slate-900">{user?.name || 'Jonathan Vance-Sterling'}</p>
           </div>
         </div>
 
@@ -37,14 +39,14 @@ export function Step1({ onNext, onPrev }: StepProps) {
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Institutional Email</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">@</div>
-            <p className="font-bold text-lg text-slate-900">j.sterling@sovereign-ledger.int</p>
+            <p className="font-bold text-lg text-slate-900">{user?.email || 'j.sterling@sovereign-ledger.int'}</p>
           </div>
         </div>
         <div>
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Title</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">💼</div>
-            <p className="font-bold text-lg text-slate-900">Sr. Workforce Strategist</p>
+            <p className="font-bold text-lg text-slate-900">{(user as any)?.title || 'Sr. Workforce Strategist'}</p>
           </div>
         </div>
 
@@ -105,14 +107,14 @@ export function Step1({ onNext, onPrev }: StepProps) {
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Supervisor Name</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">🧑‍💼</div>
-            <p className="font-bold text-lg text-slate-900">Dr. Helena Rossi</p>
+            <p className="font-bold text-lg text-slate-900">{(user as any)?.reportingTo?.name || 'Dr. Helena Rossi'}</p>
           </div>
         </div>
         <div>
           <p className="text-xs font-bold text-corporateBlue tracking-widest uppercase mb-3">Supervisor Title</p>
           <div className="flex items-center gap-3">
             <div className="text-slate-400">✔️</div>
-            <p className="font-bold text-lg text-slate-900">Chief of Operations - EMEA</p>
+            <p className="font-bold text-lg text-slate-900">{(user as any)?.reportingTo?.title || 'Chief of Operations'}</p>
           </div>
         </div>
       </div>

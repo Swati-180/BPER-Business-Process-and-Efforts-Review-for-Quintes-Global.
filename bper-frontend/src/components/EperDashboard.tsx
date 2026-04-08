@@ -1,42 +1,18 @@
-import { useState } from "react";
 import {
   Users, FileCheck, Clock, CheckCircle2, TrendingUp,
-  ArrowUpRight, ChevronRight, Layers, DollarSign, Activity
+  ArrowUpRight, ChevronRight, Activity
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, CartesianGrid
 } from "recharts";
 
-// ─── Mock data (replace with API calls) ─────────────────────────────────────
-const STAT_CARDS = [
-  { label: "Total Employees", value: "1,248", icon: Users, color: "bg-blue-50 text-blue-600", change: "+2.4%", up: true },
-  { label: "Forms Submitted", value: "942", icon: FileCheck, color: "bg-indigo-50 text-indigo-600", change: "+18", up: true },
-  { label: "Pending Review", value: "156", icon: Clock, color: "bg-amber-50 text-amber-600", change: "Requires Action", up: false, isWarning: true },
-  { label: "Approved", value: "786", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600", change: "83.4%", up: true },
-  { label: "Avg Utilization", value: "92.4%", icon: TrendingUp, color: "bg-corporateBlue bg-opacity-10 text-corporateBlue", change: "Global Target: 80%", up: true, isHighlight: true },
-];
-
-const FTE_BY_TOWER = [
-  { name: "Finance", fte: 84.5 },
-  { name: "Supply Chain", fte: 72.1 },
-  { name: "IT Ops", fte: 68.3 },
-  { name: "HR Services", fte: 55.8 },
-  { name: "Procurement", fte: 48.25 },
-];
-
+// Mock data to fall back on for static charts or missing backend bits
 const SUBMISSION_STATUS = [
   { name: "Approved", value: 786, color: "#185FA5" },
   { name: "Pending", value: 156, color: "#f59e0b" },
   { name: "Draft / Not Started", value: 306, color: "#e2e8f0" },
-];
-
-const TOP_ACTIVITIES = [
-  { activity: "Invoice Processing & Verification", tower: "Finance", fte: 84.5, consolidate: true },
-  { activity: "Vendor Relationship Management", tower: "Procurement", fte: 72.1, consolidate: true },
-  { activity: "Technical Helpdesk Tier 1", tower: "IT Ops", fte: 68.3, consolidate: false },
-  { activity: "Monthly Financial Consolidation", tower: "Finance", fte: 55.8, consolidate: true },
-  { activity: "Recruitment Sourcing & Screening", tower: "HR Services", fte: 48.25, consolidate: false },
 ];
 
 const TEAM_UTILIZATION = [
@@ -46,20 +22,45 @@ const TEAM_UTILIZATION = [
   { name: "Direct Procurement Team", pct: 91 },
 ];
 
-interface EperDashboardProps {
-  setActivePage: (page: string) => void;
-}
+import { useDashboardSummary } from "../queries/reports";
+import { LoadingSpinner, ErrorState } from "./ui";
 
-export function EperDashboard({ setActivePage }: EperDashboardProps) {
-  const COLORS = ["#185FA5", "#f59e0b", "#e2e8f0"];
+export function EperDashboard() {
+  const navigate = useNavigate();
+  const { data, isLoading, isError, refetch } = useDashboardSummary();
+
+  if (isLoading) return <LoadingSpinner label="Compiling Intelligence..." />;
+  if (isError) return <div className="p-8"><ErrorState onRetry={refetch} /></div>;
+
+  const summary = data || {
+    totalEmployees: 0,
+    submissionStats: { submitted: 0, underReview: 0, approved: 0 },
+    avgUtilization: 0,
+    fteByTower: [],
+    consolidationSummary: { activities: 0, savedFTE: 0, costSaving: 0 }
+  };
+
+  const statCards = [
+    { label: "Total Employees", value: summary.totalEmployees?.toString(), icon: Users, color: "bg-blue-50 text-blue-600", change: "Active across enterprise", up: true },
+    { label: "Forms Submitted", value: summary.submissionStats?.submitted?.toString() || "0", icon: FileCheck, color: "bg-indigo-50 text-indigo-600", change: "Current Cycle", up: true },
+    { label: "Pending Review", value: summary.submissionStats?.underReview?.toString() || "0", icon: Clock, color: "bg-amber-50 text-amber-600", change: "Requires Action", up: false, isWarning: true },
+    { label: "Approved", value: summary.submissionStats?.approved?.toString() || "0", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600", change: "Successfully processed", up: true },
+    { label: "Avg Utilization", value: `${(summary.avgUtilization * 100).toFixed(1)}%`, icon: TrendingUp, color: "bg-corporateBlue bg-opacity-10 text-corporateBlue", change: "Global Target: 80%", up: true, isHighlight: true },
+  ];
+
+  const parsedSubmissionStatus = [
+    { name: "Approved", value: summary.submissionStats?.approved || 0, color: "#185FA5" },
+    { name: "Under Review", value: summary.submissionStats?.underReview || 0, color: "#f59e0b" },
+    { name: "Draft / Not Started", value: (summary.submissionStats?.draft || 0) + (summary.totalEmployees - (summary.submissionStats?.submitted || 0)), color: "#e2e8f0" },
+  ];
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen overflow-y-auto">
       {/* Top Nav */}
       <div className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
         <div>
-          <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">ePER Platform</p>
-          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Command Dashboard</h1>
+          <p className="text-xs font-bold text-slate-400 tracking-widest uppercase">Admin Platform</p>
+          <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Intelligence Dashboard</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-corporateBlue-dark text-white flex items-center justify-center text-xs font-bold">OA</div>
@@ -71,7 +72,7 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
 
         {/* ROW 1 — Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {STAT_CARDS.map((card) => {
+          {statCards.map((card) => {
             const Icon = card.icon;
             return (
               <div
@@ -101,12 +102,12 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
             </div>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={FTE_BY_TOWER} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                <BarChart data={summary.fteByTower} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="tower" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                  <Bar dataKey="fte" name="Total FTE" fill="#185FA5" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                  <Bar dataKey="totalFTE" name="Total FTE" fill="#185FA5" radius={[4, 4, 0, 0]} maxBarSize={48} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -119,8 +120,8 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={SUBMISSION_STATUS} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={2}>
-                    {SUBMISSION_STATUS.map((entry, index) => (
+                  <Pie data={parsedSubmissionStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={2}>
+                    {parsedSubmissionStatus.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
@@ -129,7 +130,7 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
               </ResponsiveContainer>
             </div>
             <div className="space-y-2 mt-2">
-              {SUBMISSION_STATUS.map((s) => (
+              {parsedSubmissionStatus.map((s) => (
                 <div key={s.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ background: s.color }}></div>
@@ -160,18 +161,7 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
                 </tr>
               </thead>
               <tbody>
-                {TOP_ACTIVITIES.map((row, i) => (
-                  <tr key={i} className="border-t border-slate-50 hover:bg-slate-50/50">
-                    <td className="py-3.5 px-5 font-medium text-slate-800 text-xs">{row.activity}</td>
-                    <td className="py-3.5 px-3 text-xs text-slate-500">{row.tower}</td>
-                    <td className="py-3.5 px-3 text-center font-bold text-corporateBlue text-xs">{row.fte}</td>
-                    <td className="py-3.5 px-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.consolidate ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"}`}>
-                        {row.consolidate ? "YES" : "NO"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                <tr><td colSpan={4} className="py-8 text-center text-slate-400 text-xs">Full activity list available in Deep Reports</td></tr>
               </tbody>
             </table>
           </div>
@@ -218,19 +208,19 @@ export function EperDashboard({ setActivePage }: EperDashboardProps) {
             <div className="flex gap-8 shrink-0">
               <div>
                 <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">Total Activities</p>
-                <p className="text-3xl font-extrabold">1,402</p>
+                <p className="text-3xl font-extrabold">{summary.consolidationSummary?.activities}</p>
               </div>
               <div>
                 <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">Saved FTE</p>
-                <p className="text-3xl font-extrabold text-blue-300">124.5</p>
+                <p className="text-3xl font-extrabold text-blue-300">{summary.consolidationSummary?.savedFTE}</p>
               </div>
               <div>
                 <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">Cost Saving</p>
-                <p className="text-3xl font-extrabold text-emerald-300">₹7.5Cr</p>
+                <p className="text-3xl font-extrabold text-emerald-300">₹{summary.consolidationSummary?.costSaving?.toLocaleString()}</p>
               </div>
             </div>
             <button
-              onClick={() => setActivePage("deepReports")}
+              onClick={() => navigate("/deep-reports")}
               className="bg-white text-corporateBlue-dark font-bold text-sm py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors shadow-lg flex items-center gap-2 shrink-0"
             >
               View Full Report <ArrowUpRight size={16} />

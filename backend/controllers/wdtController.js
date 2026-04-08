@@ -55,6 +55,46 @@ const submit = async (req, res) => {
   }
 };
 
+// POST /api/eper/wdt/draft
+const saveDraft = async (req, res) => {
+  try {
+    const { department, month, year, activities, overtimeHours } = req.body;
+    let reviewer = null;
+    if (req.user.reportingTo) reviewer = req.user.reportingTo;
+
+    let submission = await WdtSubmission.findOne({
+      employee: req.user._id, month, year
+    });
+
+    if (submission && submission.status !== 'draft' && submission.status !== 'returned_for_revision') {
+      return res.status(409).json({ message: 'A locked submission already exists for this period.' });
+    }
+
+    if (submission) {
+      submission.activities = activities || [];
+      if (department) submission.department = department;
+      submission.overtimeHours = overtimeHours || 0;
+      submission.status = 'draft';
+      await submission.save();
+    } else {
+      submission = await WdtSubmission.create({
+        employee: req.user._id,
+        department,
+        reviewer,
+        month,
+        year,
+        overtimeHours: overtimeHours || 0,
+        activities: activities || [],
+        status: 'draft'
+      });
+    }
+
+    res.status(200).json(submission);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // GET /api/eper/wdt/my
 const getMySubmissions = async (req, res) => {
   try {
@@ -235,7 +275,7 @@ const grantEdit = async (req, res) => {
 };
 
 module.exports = {
-  submit, getMySubmissions, getTeamSubmissions,
+  submit, saveDraft, getMySubmissions, getTeamSubmissions,
   flagActivities, approveSubmission, returnForRevision,
   editSubmission, requestEdit, grantEdit
 };

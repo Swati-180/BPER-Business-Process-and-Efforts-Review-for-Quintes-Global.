@@ -10,6 +10,13 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'tower_lead', 'supervisor', 'employee'],
     default: 'employee'
   },
+  requestedRole: { type: String, default: null }, // Stores raw frontend request
+  status: {
+    type: String,
+    enum: ['active', 'pending'],
+    default: 'active'
+  },
+  employeeId: { type: String, default: '' },
   department: { type: mongoose.Schema.Types.ObjectId, ref: 'EperDepartment', default: null },
   tower: { type: mongoose.Schema.Types.ObjectId, ref: 'EperTower', default: null },
   grade: { type: String, default: '' },
@@ -19,9 +26,12 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) {
+    if (next) return next();
+    return;
+  }
   this.password = await bcrypt.hash(this.password, 10);
-  next();
+  if (next && typeof next === 'function') next();
 });
 
 // Compare password method

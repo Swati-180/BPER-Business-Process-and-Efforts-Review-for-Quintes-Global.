@@ -1,109 +1,82 @@
-import { useState } from "react";
-import { Flag, Check, X, ChevronRight, Bell, Download, Printer } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Flag, Check, ChevronRight, Bell, Download, Printer } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useTeamSubmissions, useApproveSubmission, useReturnSubmission, useFlagActivities, useGrantEdit } from "../queries/form";
+import toast from "react-hot-toast";
 
-type SubmissionStatus = "under_review" | "submitted" | "returned" | "approved";
-
-interface ActivityEntry {
-  category: string;
-  description: string;
-  hours: number;
-  flagged: boolean;
-  flagComment: string;
-  editPermissionRequested: boolean;
-  editPermissionReason: string;
-  editPermissionGranted: boolean;
-}
-
-interface WdtEntry {
-  id: string;
-  employeeName: string;
-  initials: string;
-  department: string;
-  status: SubmissionStatus;
-  weekEnding: string;
-  activities: ActivityEntry[];
-  selfNarrative: string;
-  totalHours: number;
-  flagsRaised: number;
-}
-
-const MOCK_SUBMISSIONS: WdtEntry[] = [
-  {
-    id: "sub_001", employeeName: "Elena Rodriguez", initials: "ER", department: "LOGISTICS-A",
-    status: "under_review", weekEnding: "Oct 27, 2023",
-    activities: [
-      { category: "Inventory Auditing", description: "Quarterly reconciliation of Phase 1 terminal assets and mobile scanning units.", hours: 12.5, flagged: false, flagComment: "", editPermissionRequested: true, editPermissionReason: "Missing Saturday morning overtime hours for phase 1 asset count.", editPermissionGranted: false },
-      { category: "Vendor Coordination", description: "Managing escalation tickets for Third-Party Logistics partners regarding delays in North Terminal.", hours: 8.0, flagged: true, flagComment: "Please clarify if this coordination included the weekend surge shift...", editPermissionRequested: false, editPermissionReason: "", editPermissionGranted: false },
-      { category: "Quality Assurance", description: "Direct monitoring of outbound pallet stability and wrap integrity on Dock 4.", hours: 4.0, flagged: false, flagComment: "", editPermissionRequested: false, editPermissionReason: "", editPermissionGranted: false },
-    ],
-    selfNarrative: "The week was high-impact due to the terminal upgrade. I focused heavily on ensuring zero downtime during the scanning unit migration.",
-    totalHours: 24.5, flagsRaised: 1
-  },
-  {
-    id: "sub_002", employeeName: "Jameson Blake", initials: "JB", department: "LOGISTICS-A",
-    status: "submitted", weekEnding: "Oct 27, 2023",
-    activities: [
-      { category: "Route Planning", description: "Daily route optimization for 12 regional delivery zones.", hours: 10.0, flagged: false, flagComment: "", editPermissionRequested: false, editPermissionReason: "", editPermissionGranted: false },
-      { category: "Fleet Maintenance", description: "Coordinated preventive maintenance scheduling for 8 trucks.", hours: 5.0, flagged: false, flagComment: "", editPermissionRequested: false, editPermissionReason: "", editPermissionGranted: false },
-    ],
-    selfNarrative: "Routine week focused on maximizing route efficiency before Q4 peak season.",
-    totalHours: 15.0, flagsRaised: 0
-  },
-  {
-    id: "sub_003", employeeName: "Sarah Hughes", initials: "SH", department: "SUPPORT-OPS",
-    status: "returned", weekEnding: "Oct 20, 2023",
-    activities: [
-      { category: "Ticket Resolution", description: "Handled 42 customer support tickets across Tier 1 and Tier 2.", hours: 18.0, flagged: true, flagComment: "Please separate Tier 1 and Tier 2 hours.", editPermissionRequested: false, editPermissionReason: "", editPermissionGranted: false },
-    ],
-    selfNarrative: "High volume week due to product release support surge.",
-    totalHours: 18.0, flagsRaised: 1
-  }
-];
+type SubmissionStatus = "draft" | "submitted" | "under_review" | "returned_for_revision" | "approved";
 
 const STATUS_BADGE: Record<SubmissionStatus, { label: string; cls: string }> = {
+  draft: { label: "DRAFT", cls: "bg-slate-100 text-slate-700 border border-slate-200" },
   under_review: { label: "UNDER REVIEW", cls: "bg-amber-100 text-amber-700 border border-amber-200" },
   submitted: { label: "SUBMITTED", cls: "bg-blue-100 text-blue-700 border border-blue-200" },
-  returned: { label: "RETURNED", cls: "bg-red-100 text-red-700 border border-red-200" },
+  returned_for_revision: { label: "RETURNED", cls: "bg-red-100 text-red-700 border border-red-200" },
   approved: { label: "APPROVED", cls: "bg-green-100 text-green-700 border border-green-200" }
 };
 
 export function WdtReview() {
-  const [submissions, setSubmissions] = useState<WdtEntry[]>(MOCK_SUBMISSIONS);
-  const [activeId, setActiveId] = useState<string>(MOCK_SUBMISSIONS[0].id);
+  const { user } = useAuth();
+  const { data: teamSubmissions, isLoading } = useTeamSubmissions();
+  
+  const approveMutation = useApproveSubmission();
+  const returnMutation = useReturnSubmission();
+  const flagMutation = useFlagActivities();
+  const grantEditMutation = useGrantEdit();
+
+  const [activeId, setActiveId] = useState<string>("");
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [flaggingIdx, setFlaggingIdx] = useState<number | null>(null);
   const [flagText, setFlagText] = useState("");
 
-  const active = submissions.find(s => s.id === activeId)!;
-  const pendingEditRequests = active.activities.filter(a => a.editPermissionRequested && !a.editPermissionGranted).length;
+  const submissions = teamSubmissions || [];
 
-  const updateSubmission = (updated: WdtEntry) => {
-    setSubmissions(subs => subs.map(s => s.id === updated.id ? updated : s));
-  };
+  useEffect(() => {
+    if (!activeId && submissions.length > 0) {
+      setActiveId(submissions[0]._id);
+    }
+  }, [submissions, activeId]);
+
+  const active = submissions.find((s: any) => s._id === activeId);
+  const pendingEditRequests = active?.activities?.filter((a: any) => a.editPermissionRequested && !a.editPermissionGranted).length || 0;
 
   const handleApprove = () => {
-    updateSubmission({ ...active, status: "approved" });
-    setShowApproveModal(false);
+    approveMutation.mutate(active._id, {
+      onSuccess: () => {
+        toast.success("Submission approved!");
+        setShowApproveModal(false);
+      }
+    });
   };
 
   const handleReturn = () => {
-    updateSubmission({ ...active, status: "returned" });
+    const reason = window.prompt("Reason for return:");
+    if (reason) {
+      returnMutation.mutate({ id: active._id, revisionNote: reason }, {
+        onSuccess: () => toast.success("Returned for revision")
+      });
+    }
   };
 
   const handleSaveFlag = (idx: number) => {
-    const updated = { ...active };
-    updated.activities[idx] = { ...updated.activities[idx], flagged: true, flagComment: flagText };
-    updated.flagsRaised = updated.activities.filter(a => a.flagged).length;
-    updateSubmission(updated);
-    setFlaggingIdx(null);
-    setFlagText("");
+    if (!flagText.trim()) return;
+    flagMutation.mutate({ id: active._id, flags: [{ activityIndex: idx, flagComment: flagText }] }, {
+      onSuccess: () => {
+        setFlaggingIdx(null);
+        setFlagText("");
+        toast.success("Flag saved");
+      }
+    });
   };
 
   const handleGrantEdit = (idx: number, granted: boolean) => {
-    const updated = { ...active };
-    updated.activities[idx] = { ...updated.activities[idx], editPermissionGranted: granted, editPermissionRequested: !granted };
-    updateSubmission(updated);
+    grantEditMutation.mutate({ id: active._id, activityIndex: idx, granted }, {
+      onSuccess: () => toast.success("Permission updated")
+    });
   };
+
+  const getInitials = (name: string) => name ? name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : '??';
+
+  if (isLoading) return <div className="flex-1 min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium">Loading submissions...</div>;
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen flex flex-col">
@@ -115,7 +88,7 @@ export function WdtReview() {
               <Check size={28} className="text-green-600" />
             </div>
             <h3 className="text-xl font-extrabold text-slate-900 text-center mb-2">Approve Submission?</h3>
-            <p className="text-sm text-slate-500 text-center mb-6">This will mark <strong>{active.employeeName}</strong>'s WDT submission as approved. This action cannot be undone.</p>
+            <p className="text-sm text-slate-500 text-center mb-6">This will mark <strong>{active?.employee?.name}</strong>'s WDT submission as approved. This action cannot be undone.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowApproveModal(false)} className="flex-1 border border-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-50">Cancel</button>
               <button onClick={handleApprove} className="flex-1 bg-corporateBlue text-white font-bold py-3 rounded-xl hover:bg-corporateBlue-dark shadow-sm">Confirm Approve</button>
@@ -137,8 +110,8 @@ export function WdtReview() {
               <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">{pendingEditRequests}</span>
             )}
           </button>
-          <div className="w-9 h-9 rounded-full bg-corporateBlue-dark text-white flex items-center justify-center text-xs font-bold">MC</div>
-          <span className="text-sm font-semibold text-slate-700">Marcus Chen</span>
+          <div className="w-9 h-9 rounded-full bg-corporateBlue-dark text-white flex items-center justify-center text-xs font-bold">{getInitials(user?.name || '')}</div>
+          <span className="text-sm font-semibold text-slate-700">{user?.name}</span>
         </div>
       </div>
 
@@ -148,33 +121,30 @@ export function WdtReview() {
           {/* Tabs */}
           <div className="flex border-b border-slate-200 px-4 pt-3">
             <button className="flex-1 text-sm font-bold text-corporateBlue border-b-2 border-corporateBlue pb-2.5">
-              Pending ({submissions.filter(s => s.status !== "approved").length})
+              Pending ({submissions.filter((s:any) => s.status !== "approved" && s.status !== "draft").length})
             </button>
             <button className="flex-1 text-sm font-medium text-slate-400 pb-2.5">History</button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
-            {submissions.map(sub => (
+            {submissions.map((sub: any) => (
               <button
-                key={sub.id}
-                onClick={() => setActiveId(sub.id)}
-                className={`w-full text-left p-4 rounded-xl border transition-all ${activeId === sub.id ? "border-corporateBlue/30 bg-blue-50/40 shadow-sm" : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"}`}
+                key={sub._id}
+                onClick={() => setActiveId(sub._id)}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${activeId === sub._id ? "border-corporateBlue/30 bg-blue-50/40 shadow-sm" : "border-slate-100 hover:border-slate-200 hover:bg-slate-50"}`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">{sub.initials}</div>
+                  <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold shrink-0">{getInitials(sub.employee?.name)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">{sub.employeeName}</p>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{sub.department}</p>
+                    <p className="text-sm font-bold text-slate-900 truncate">{sub.employee?.name}</p>
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{sub.department?.name || "Corporate"}</p>
                   </div>
-                  {sub.status === "under_review" && <ChevronRight size={16} className="text-corporateBlue shrink-0" />}
+                  {(sub.status === "under_review" || sub.status === "submitted") && <ChevronRight size={16} className="text-corporateBlue shrink-0" />}
                 </div>
-                <div className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-widest ${STATUS_BADGE[sub.status].cls}`}>
+                <div className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-widest ${STATUS_BADGE[sub.status as SubmissionStatus]?.cls}`}>
                   <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                  {STATUS_BADGE[sub.status].label}
+                  {STATUS_BADGE[sub.status as SubmissionStatus]?.label}
                 </div>
-                {sub.status === "under_review" && (
-                  <p className="text-[10px] text-slate-500 mt-2 italic truncate">"Finalized WDT for Q3 Phase 1..."</p>
-                )}
               </button>
             ))}
           </div>
@@ -182,12 +152,14 @@ export function WdtReview() {
 
         {/* Right Panel — Detail */}
         <div className="flex-1 overflow-y-auto">
+          {active ? (
+          <>
           <div className="p-8 max-w-3xl mx-auto pb-32">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-extrabold text-corporateBlue">WDT Detailed Analysis</h2>
-                <p className="text-sm text-slate-500 mt-0.5">Employee: {active.employeeName} · Week Ending {active.weekEnding}</p>
+                <p className="text-sm text-slate-500 mt-0.5">Employee: {active.employee?.name} · {active.month} {active.year}</p>
               </div>
               <div className="flex gap-2">
                 <button className="border border-slate-200 text-slate-500 p-2 rounded-lg hover:bg-slate-50"><Printer size={16} /></button>
@@ -205,16 +177,16 @@ export function WdtReview() {
 
             {/* Activity rows */}
             <div className="space-y-4">
-              {active.activities.map((act, idx) => (
-                <div key={idx} className={`bg-white rounded-xl border shadow-sm overflow-hidden ${act.flagged ? "border-red-200" : "border-slate-200"}`}>
+              {active.activities?.map((act: any, idx: number) => (
+                <div key={idx} className={`bg-white rounded-xl border shadow-sm overflow-hidden ${act.flaggedForRevision ? "border-red-200" : "border-slate-200"}`}>
                   <div className="px-5 py-4 flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-sm font-extrabold text-corporateBlue mb-1">{act.category}</p>
-                      <p className="text-sm text-slate-600 leading-relaxed">{act.description}</p>
+                      <p className="text-sm font-extrabold text-corporateBlue mb-1">{act.activity?.name || "Custom Activity"}</p>
+                      <p className="text-sm text-slate-600 leading-relaxed">{act.customName || "No description provided."}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-lg font-extrabold text-slate-900">{act.hours.toFixed(1)}</span>
-                      {act.flagged ? (
+                      <span className="text-lg font-extrabold text-slate-900">{Number(act.hours).toFixed(1)}</span>
+                      {act.flaggedForRevision ? (
                         <span className="w-8 h-8 flex items-center justify-center text-red-500"><Flag size={18} fill="currentColor" /></span>
                       ) : (
                         <button
@@ -264,7 +236,7 @@ export function WdtReview() {
                   )}
 
                   {/* Existing flag comment */}
-                  {act.flagged && act.flagComment && flaggingIdx !== idx && (
+                  {act.flaggedForRevision && act.flagComment && flaggingIdx !== idx && (
                     <div className="bg-red-50 border-t border-red-200 px-5 py-3">
                       <p className="text-[10px] font-extrabold text-red-700 tracking-widest uppercase mb-1">Flagged</p>
                       <p className="text-xs text-slate-600">{act.flagComment}</p>
@@ -293,11 +265,15 @@ export function WdtReview() {
               <div className="flex gap-8 text-xs">
                 <div>
                   <p className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase">Total Hours</p>
-                  <p className="text-xl font-extrabold text-slate-900">{active.totalHours.toFixed(1)}</p>
+                  <p className="text-xl font-extrabold text-slate-900">
+                    {(active.activities?.reduce((acc: number, a: any) => acc + (a.hours || 0), 0) || 0).toFixed(1)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase">Flags Raised</p>
-                  <p className="text-xl font-extrabold text-red-600">{String(active.flagsRaised).padStart(2, '0')}</p>
+                  <p className="text-xl font-extrabold text-red-600">
+                    {active.activities?.filter((a: any) => a.flaggedForRevision)?.length?.toString().padStart(2, '0') || '00'}
+                  </p>
                 </div>
               </div>
 
@@ -328,6 +304,10 @@ export function WdtReview() {
               </div>
             </div>
           </div>
+          </>
+          ) : (
+             <div className="p-8 text-center text-slate-500 mt-20">Select a submission from the queue to review.</div>
+          )}
         </div>
       </div>
     </div>
