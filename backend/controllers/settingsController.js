@@ -37,5 +37,28 @@ const getAllSettings = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+<<<<<<< HEAD
 
 module.exports = { getStandardHours, updateStandardHours, getAllSettings };
+=======
+// GET /api/eper/settings/submission-window
+const getSubmissionWindow = async (req, res) => {
+  try {
+    const deadlineSetting = await Setting.findOne({ key: 'submissionDeadline' });
+    // Default to the end of next month if no setting exists
+    const defaultDeadline = new Date();
+    defaultDeadline.setMonth(defaultDeadline.getMonth() + 1);
+    defaultDeadline.setDate(15);
+    
+    const deadline = deadlineSetting ? new Date(deadlineSetting.value) : defaultDeadline;
+    const now = new Date();
+    
+    const isOpen = now <= deadline;
+    res.json({ isOpen, deadline });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getStandardHours, updateStandardHours, getAllSettings, getSubmissionWindow };
+>>>>>>> target/main

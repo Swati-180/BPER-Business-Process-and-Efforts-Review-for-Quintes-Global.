@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useState } from "react";
 import { Search, Save, RotateCcw } from "lucide-react";
 import { apiGet, apiPost } from "../api/http";
 import { EmptyState, ErrorFallbackState, LoadingState } from "./PageStates";
+=======
+import { useState } from "react";
+import { Search, Save, RotateCcw } from "lucide-react";
+>>>>>>> target/main
 
 type Remark = "Fit" | "Train to Fit" | "Low Fit" | "Unfit" | "Not Scored";
 
@@ -14,6 +19,17 @@ interface Employee {
   remark?: Remark;
 }
 
+<<<<<<< HEAD
+=======
+const EMPLOYEES: Employee[] = [
+  { id: "e1", name: "Jameson D.", initials: "JD", department: "Operations", grade: "L3", remark: "Fit" },
+  { id: "e2", name: "Amara K.", initials: "AK", department: "Finance", grade: "L5", remark: "Train to Fit" },
+  { id: "e3", name: "Ricardo V.", initials: "RV", department: "Technology", grade: "L4", remark: "Unfit" },
+  { id: "e4", name: "Sarah L.", initials: "SL", department: "Operations", grade: "L2", remark: undefined },
+  { id: "e5", name: "Marcus P.", initials: "MP", department: "Finance", grade: "L3", remark: "Fit" },
+];
+
+>>>>>>> target/main
 interface Param {
   key: string;
   label: string;
@@ -66,6 +82,7 @@ const REMARK_BADGE: Record<string, string> = {
 };
 
 export function FitmentScoring() {
+<<<<<<< HEAD
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
   const [search, setSearch] = useState("");
@@ -114,6 +131,14 @@ export function FitmentScoring() {
     () => employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()) || e.department.toLowerCase().includes(search.toLowerCase())),
     [employees, search]
   );
+=======
+  const [selectedEmp, setSelectedEmp] = useState<Employee>(EMPLOYEES[0]);
+  const [search, setSearch] = useState("");
+  const [scores, setScores] = useState<Record<string, number>>({});
+  const [saved, setSaved] = useState(false);
+
+  const filteredEmps = EMPLOYEES.filter(e => e.name.toLowerCase().includes(search.toLowerCase()) || e.department.toLowerCase().includes(search.toLowerCase()));
+>>>>>>> target/main
 
   const weightedScore = PARAMS.reduce((sum, p) => sum + (scores[p.key] || 0) * p.weightage, 0);
   const maxPossible = 20.0;
@@ -121,14 +146,19 @@ export function FitmentScoring() {
   const progressPct = Math.min(100, (weightedScore / maxPossible) * 100);
 
   const handleClear = () => setScores({});
+<<<<<<< HEAD
   const handleSave = async () => {
     if (!selectedEmp) return;
     const parameters = PARAMS.reduce((acc, param) => ({ ...acc, [param.key]: scores[param.key] || 0 }), {});
     await apiPost("/eper/fitment/score", { employeeId: selectedEmp.id, parameters });
+=======
+  const handleSave = () => {
+>>>>>>> target/main
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
+<<<<<<< HEAD
   if (loading) {
     return <LoadingState title="Loading fitment scoring" message="Fetching team members for fitment assessment." />;
   }
@@ -143,6 +173,10 @@ export function FitmentScoring() {
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen flex flex-col overflow-auto">
+=======
+  return (
+    <div className="flex-1 bg-slate-50 min-h-screen flex flex-col">
+>>>>>>> target/main
       {/* Top */}
       <div className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
         <div>
@@ -155,7 +189,11 @@ export function FitmentScoring() {
         </div>
       </div>
 
+<<<<<<< HEAD
       <div className="flex flex-1 overflow-auto">
+=======
+      <div className="flex flex-1 overflow-hidden">
+>>>>>>> target/main
         {/* LEFT — Employee Selector */}
         <div className="w-72 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
           <div className="p-4 border-b border-slate-100">

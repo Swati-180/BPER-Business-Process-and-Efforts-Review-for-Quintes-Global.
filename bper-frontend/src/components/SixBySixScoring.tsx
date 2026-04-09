@@ -1,13 +1,24 @@
+<<<<<<< HEAD
 import { useCallback, useEffect, useState } from "react";
 import { Filter, Save, RotateCcw, ChevronDown } from "lucide-react";
 import { apiGet, apiPost } from "../api/http";
 import { EmptyState, ErrorFallbackState, LoadingState } from "./PageStates";
+=======
+import { useState, useEffect } from "react";
+import { Filter, Save, RotateCcw, ChevronDown } from "lucide-react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
+import toast from 'react-hot-toast';
+>>>>>>> target/main
 
 type Rating = "H" | "M" | "L" | "";
 
 interface ActivityRow {
   id: number;
+<<<<<<< HEAD
   activityId?: string;
+=======
+>>>>>>> target/main
   name: string;
   tower: string;
   // Performance (H=good)
@@ -27,6 +38,11 @@ interface ActivityRow {
   comments: string;
 }
 
+<<<<<<< HEAD
+=======
+// const INITIAL_ROWS: ActivityRow[] = [...] - REMOVED - now API driven
+
+>>>>>>> target/main
 function calcScore(row: ActivityRow): { perf: number; char: number; total: number; consolidate: boolean } {
   const perfKeys: (keyof ActivityRow)[] = ["multipleLocns", "routine", "volumes", "manpower", "sops", "erpTechnology"];
   const charKeys: (keyof ActivityRow)[] = ["sensitivity", "criticality", "controls", "proximity", "regulatory", "skill"];
@@ -37,8 +53,13 @@ function calcScore(row: ActivityRow): { perf: number; char: number; total: numbe
 }
 
 const RatingCell = ({
+<<<<<<< HEAD
   value, onChange
 }: { value: Rating; onChange: (v: Rating) => void }) => (
+=======
+  value, onChange, onlyH = false
+}: { value: Rating; onChange: (v: Rating) => void; onlyH?: boolean }) => (
+>>>>>>> target/main
   <select
     className="w-16 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold text-slate-700 outline-none focus:border-corporateBlue appearance-none text-center cursor-pointer"
     value={value}
@@ -53,6 +74,7 @@ const RatingCell = ({
 
 export function SixBySixScoring() {
   const [rows, setRows] = useState<ActivityRow[]>([]);
+<<<<<<< HEAD
   const [departmentId, setDepartmentId] = useState<string>("");
   const [selected, setSelected] = useState<number[]>([]);
   const [bulkVal, setBulkVal] = useState<Rating>("L");
@@ -106,6 +128,20 @@ export function SixBySixScoring() {
   useEffect(() => {
     void loadActivities();
   }, [loadActivities]);
+=======
+
+  const { data: apiRows } = useQuery({
+    queryKey: ['sixBySix'],
+    queryFn: () => api.get('/api/eper/sixbysix/scores').then(res => res.data)
+  });
+
+  useEffect(() => {
+    if (apiRows) setRows(apiRows);
+  }, [apiRows]);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [bulkVal, setBulkVal] = useState<Rating>("L");
+  const [saved, setSaved] = useState(false);
+>>>>>>> target/main
 
   const updateRow = (id: number, field: keyof ActivityRow, value: string) => {
     setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r));
@@ -128,6 +164,7 @@ export function SixBySixScoring() {
     setSaved(false);
   };
 
+<<<<<<< HEAD
   const handleSave = async () => {
     if (!departmentId) return;
     await Promise.all(
@@ -155,11 +192,23 @@ export function SixBySixScoring() {
     );
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+=======
+  const queryClient = useQueryClient();
+  const handleSave = async () => {
+    try {
+      await api.post('/api/eper/sixbysix/save', { rows });
+      toast.success('Scores saved!');
+      queryClient.invalidateQueries({ queryKey: ['sixBySix'] });
+    } catch (err) {
+      toast.error('Save failed');
+    }
+>>>>>>> target/main
   };
 
   const scored = rows.filter(r => calcScore(r).total > 0).length;
   const consolidatable = rows.filter(r => calcScore(r).consolidate).length;
 
+<<<<<<< HEAD
   if (loading) {
     return <LoadingState title="Loading 6x6 scoring" message="Fetching activities for the selected department." />;
   }
@@ -174,6 +223,10 @@ export function SixBySixScoring() {
 
   return (
     <div className="flex-1 bg-slate-50 min-h-screen overflow-x-auto flex flex-col">
+=======
+  return (
+    <div className="flex-1 bg-slate-50 min-h-screen overflow-hidden flex flex-col">
+>>>>>>> target/main
       {/* Top bar */}
       <div className="bg-white border-b border-slate-200 px-8 py-5 flex items-start justify-between sticky top-0 z-20">
         <div>
@@ -201,7 +254,11 @@ export function SixBySixScoring() {
               <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
+<<<<<<< HEAD
           <button onClick={() => void loadActivities()} className="bg-corporateBlue hover:bg-corporateBlue-dark text-white text-sm font-bold py-2 px-5 rounded-lg flex items-center gap-2 shadow-sm">
+=======
+          <button className="bg-corporateBlue hover:bg-corporateBlue-dark text-white text-sm font-bold py-2 px-5 rounded-lg flex items-center gap-2 shadow-sm">
+>>>>>>> target/main
             <Filter size={15} /> Load Activities
           </button>
         </div>
@@ -356,7 +413,11 @@ export function SixBySixScoring() {
           Last saved 4 minutes ago by System
         </div>
         <div className="flex gap-3">
+<<<<<<< HEAD
           <button onClick={() => void loadActivities()} className="border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 px-5 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+=======
+          <button onClick={() => setRows(INITIAL_ROWS)} className="border border-slate-200 text-slate-600 text-sm font-semibold py-2.5 px-5 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+>>>>>>> target/main
             <RotateCcw size={15} /> Discard Changes
           </button>
           <button onClick={handleSave} className={`text-white text-sm font-bold py-2.5 px-6 rounded-lg flex items-center gap-2 shadow-sm transition-all ${saved ? "bg-green-600" : "bg-corporateBlue hover:bg-corporateBlue-dark"}`}>

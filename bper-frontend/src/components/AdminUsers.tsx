@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useState } from "react";
 import { Search, Bell, Settings as SettingsIcon, Plus, ChevronDown, X } from "lucide-react";
 import { apiGet, apiPost } from "../api/http";
@@ -74,6 +75,16 @@ export function AdminUsers() {
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 min-h-screen overflow-x-auto relative">
+=======
+import { useState } from "react";
+import { Search, Bell, Settings as SettingsIcon, Plus, ChevronDown, X } from "lucide-react";
+
+export function AdminUsers() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <div className="flex-1 flex flex-col bg-slate-50 min-h-screen overflow-hidden relative">
+>>>>>>> target/main
       {/* Top Navbar */}
       <div className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between z-10 shrink-0">
         <div className="relative w-96">
@@ -94,7 +105,11 @@ export function AdminUsers() {
             <SettingsIcon size={20} />
           </button>
           <div className="w-px h-6 bg-slate-200 mx-2"></div>
+<<<<<<< HEAD
           <button onClick={logout} className="hover:text-slate-900 transition-colors text-sm font-bold tracking-wide">
+=======
+          <button className="hover:text-slate-900 transition-colors text-sm font-bold tracking-wide">
+>>>>>>> target/main
             Logout
           </button>
         </div>
@@ -128,15 +143,22 @@ export function AdminUsers() {
                 <input 
                   type="text" 
                   placeholder="Employee ID, Name, or Email..." 
+<<<<<<< HEAD
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
+=======
+>>>>>>> target/main
                   className="pl-9 pr-4 py-2.5 w-full bg-white border border-transparent rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-corporateBlue/20 shadow-sm"
                 />
               </div>
             </div>
             <div className="md:col-span-3">
               <label className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-2 block">Role</label>
+<<<<<<< HEAD
               <div className="relative">
+=======
+              <div className="relative relative">
+>>>>>>> target/main
                 <select className="w-full bg-white border border-transparent p-2.5 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-corporateBlue/20 shadow-sm appearance-none font-medium">
                   <option>All Roles</option>
                   <option>Admin</option>
@@ -169,7 +191,11 @@ export function AdminUsers() {
 
           {/* Users Table */}
           <div className="flex-1 overflow-x-auto p-6 pt-8">
+<<<<<<< HEAD
             <table className="w-full min-w-[980px] text-left">
+=======
+            <table className="w-full text-left">
+>>>>>>> target/main
               <thead>
                 <tr className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase border-b border-slate-100">
                   <th className="pb-4 px-4 w-32">Employee ID</th>
@@ -182,6 +208,7 @@ export function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="text-sm">
+<<<<<<< HEAD
                 {filteredUsers.map((user) => (
                   <tr key={user._id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="py-5 px-4 font-bold text-corporateBlue">#{user._id.slice(-8).toUpperCase()}</td>
@@ -197,13 +224,72 @@ export function AdminUsers() {
                     </td>
                   </tr>
                 ))}
+=======
+                
+                {/* Admin Row */}
+                <tr className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <td className="py-5 px-4 font-bold text-corporateBlue">QG-88293</td>
+                  <td className="py-5 px-4 font-bold text-slate-900 leading-tight">Marcus Chen</td>
+                  <td className="py-5 px-4 text-slate-500 font-medium">m.chen@qgtools.com</td>
+                  <td className="py-5 px-4 text-slate-700">Financial Ops</td>
+                  <td className="py-5 px-4 text-slate-500"><span className="bg-slate-100 text-[10px] font-bold px-2 py-0.5 rounded">L4</span></td>
+                  <td className="py-5 px-4">
+                    <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full border border-blue-100 uppercase tracking-wider">Admin</span>
+                  </td>
+                  <td className="py-5 px-4 text-[10px] font-extrabold text-green-700 tracking-widest uppercase">Active</td>
+                </tr>
+
+                {/* Tower Lead Row */}
+                <tr className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <td className="py-5 px-4 font-bold text-corporateBlue">QG-55102</td>
+                  <td className="py-5 px-4 font-bold text-slate-900 leading-tight">Elena Rossi</td>
+                  <td className="py-5 px-4 text-slate-500 font-medium">e.rossi@qgtools.com</td>
+                  <td className="py-5 px-4 text-slate-700">Accounts Payable</td>
+                  <td className="py-5 px-4 text-slate-500"><span className="bg-slate-100 text-[10px] font-bold px-2 py-0.5 rounded">L6</span></td>
+                  <td className="py-5 px-4">
+                    <span className="bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-100 uppercase tracking-wider">Tower Lead</span>
+                  </td>
+                  <td className="py-5 px-4 text-[10px] font-extrabold text-green-700 tracking-widest uppercase">Active</td>
+                </tr>
+
+                {/* Supervisor Row */}
+                <tr className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <td className="py-5 px-4 font-bold text-corporateBlue">QG-33921</td>
+                  <td className="py-5 px-4 font-bold text-slate-900 leading-tight">Rajesh Kumar</td>
+                  <td className="py-5 px-4 text-slate-500 font-medium">r.kumar@qgtools.com</td>
+                  <td className="py-5 px-4 text-slate-700">Taxation Unit</td>
+                  <td className="py-5 px-4 text-slate-500"><span className="bg-slate-100 text-[10px] font-bold px-2 py-0.5 rounded">L5</span></td>
+                  <td className="py-5 px-4">
+                    <span className="bg-purple-50 text-purple-700 text-xs font-bold px-3 py-1 rounded-full border border-purple-100 uppercase tracking-wider">Supervisor</span>
+                  </td>
+                  <td className="py-5 px-4 text-[10px] font-extrabold text-green-700 tracking-widest uppercase">Active</td>
+                </tr>
+
+                {/* Employee Row */}
+                <tr className="border-b border-transparent hover:bg-slate-50/50">
+                  <td className="py-5 px-4 font-bold text-corporateBlue">QG-77402</td>
+                  <td className="py-5 px-4 font-bold text-slate-900 leading-tight">Sarah Jenkins</td>
+                  <td className="py-5 px-4 text-slate-500 font-medium">s.jenkins@qgtools.com</td>
+                  <td className="py-5 px-4 text-slate-700">General Ledger</td>
+                  <td className="py-5 px-4 text-slate-500"><span className="bg-slate-100 text-[10px] font-bold px-2 py-0.5 rounded">L2</span></td>
+                  <td className="py-5 px-4">
+                    <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1 rounded-full border border-slate-200 uppercase tracking-wider">Employee</span>
+                  </td>
+                  <td className="py-5 px-4 text-[10px] font-extrabold text-green-700 tracking-widest uppercase">Active</td>
+                </tr>
+
+>>>>>>> target/main
               </tbody>
             </table>
           </div>
 
           {/* Footer Pagination */}
           <div className="px-10 py-6 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+<<<<<<< HEAD
              <p>Showing 1 to {filteredUsers.length} of {users.length} users</p>
+=======
+             <p>Showing 1 to 3 of 42 users</p>
+>>>>>>> target/main
              <div className="flex gap-2">
                <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-100 font-sans font-medium text-slate-400 text-lg">&lt;</button>
                <button className="w-8 h-8 flex items-center justify-center rounded bg-corporateBlue text-white shadow-sm font-sans font-medium">1</button>
@@ -220,8 +306,13 @@ export function AdminUsers() {
       <div className="absolute bottom-6 left-8 right-8 flex justify-between text-[10px] font-extrabold text-slate-400 tracking-[0.2em] uppercase pointer-events-none">
         <p>© 2024 SOVEREIGN LEDGER PLATFORM</p>
         <div className="flex gap-8 pointer-events-auto">
+<<<<<<< HEAD
           <button className="hover:text-corporateBlue transition-colors">DATA PRIVACY POLICY</button>
           <button className="hover:text-corporateBlue transition-colors">ACCESS LOGS</button>
+=======
+          <a href="#" className="hover:text-corporateBlue transition-colors">DATA PRIVACY POLICY</a>
+          <a href="#" className="hover:text-corporateBlue transition-colors">ACCESS LOGS</a>
+>>>>>>> target/main
         </div>
       </div>
 
@@ -252,23 +343,39 @@ export function AdminUsers() {
                 </div>
                 <div className="col-span-8">
                   <label className="text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2 block">Full Name</label>
+<<<<<<< HEAD
                   <input type="text" placeholder="Enter full legal name" value={newUser.name} onChange={(e) => setNewUser((prev) => ({ ...prev, name: e.target.value }))} className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm" />
+=======
+                  <input type="text" placeholder="Enter full legal name" className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm" />
+>>>>>>> target/main
                 </div>
               </div>
 
               <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-8">
                   <label className="text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2 block">Email Address</label>
+<<<<<<< HEAD
                   <input type="email" placeholder="official.email@qgtools.com" value={newUser.email} onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))} className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm" />
+=======
+                  <input type="email" placeholder="official.email@qgtools.com" className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm" />
+>>>>>>> target/main
                 </div>
                 <div className="col-span-4">
                   <label className="text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2 block">Role</label>
                   <div className="relative">
+<<<<<<< HEAD
                     <select value={newUser.role} onChange={(e) => setNewUser((prev) => ({ ...prev, role: e.target.value }))} className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm font-medium appearance-none">
                       <option value="admin">Admin</option>
                       <option value="supervisor">Supervisor</option>
                       <option value="tower_lead">Tower Lead</option>
                       <option value="employee">Employee</option>
+=======
+                    <select className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm font-medium appearance-none">
+                      <option>Admin</option>
+                      <option>Supervisor</option>
+                      <option>Tower Lead</option>
+                      <option>Employee</option>
+>>>>>>> target/main
                     </select>
                     <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
@@ -283,7 +390,11 @@ export function AdminUsers() {
                 <div className="col-span-4">
                   <label className="text-[10px] font-extrabold text-slate-500 tracking-widest uppercase mb-2 block">Job Band</label>
                   <div className="relative">
+<<<<<<< HEAD
                     <select value={newUser.grade} onChange={(e) => setNewUser((prev) => ({ ...prev, grade: e.target.value }))} className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm font-medium appearance-none">
+=======
+                    <select className="w-full bg-white border border-transparent focus:border-corporateBlue outline-none p-3 rounded-lg text-sm shadow-sm font-medium appearance-none">
+>>>>>>> target/main
                       <option>L1</option>
                       <option>L2</option>
                       <option>L3</option>
@@ -339,7 +450,11 @@ export function AdminUsers() {
                 Cancel
               </button>
               <button 
+<<<<<<< HEAD
                 onClick={() => void createUser()}
+=======
+                onClick={() => setIsModalOpen(false)}
+>>>>>>> target/main
                 className="bg-corporateBlue hover:bg-corporateBlue-dark text-white font-bold text-sm py-2.5 px-6 rounded-lg shadow-md hover:shadow-lg transition-all"
               >
                 Create User

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useMemo, useState } from "react";
 import { Search, MapPin, Hash, Bell, Clock, ChevronDown, CheckCircle2 } from "lucide-react";
 import { apiGet } from "../api/http";
@@ -63,6 +64,13 @@ export function Employee360() {
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 min-h-screen overflow-auto">
+=======
+import { Search, MapPin, Hash, Bell, Clock, ChevronDown, CheckCircle2 } from "lucide-react";
+
+export function Employee360() {
+  return (
+    <div className="flex-1 flex flex-col bg-slate-50 min-h-screen overflow-y-auto">
+>>>>>>> target/main
       {/* Local Top Nav */}
       <div className="bg-white border-b border-slate-200 px-8 py-4 w-full flex items-center justify-between sticky top-0 z-20">
         <div className="relative w-80">
@@ -93,7 +101,11 @@ export function Employee360() {
              
              <div className="flex items-center gap-3 pl-2">
                <div className="text-right hidden sm:block">
+<<<<<<< HEAD
                  <p className="text-sm font-semibold text-slate-900 leading-tight">{me?.name || "User"}</p>
+=======
+                 <p className="text-sm font-semibold text-slate-900 leading-tight">Marcus Thorne</p>
+>>>>>>> target/main
                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System Administrator</p>
                </div>
                <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden shrink-0 border border-slate-200 cursor-pointer">
@@ -114,13 +126,22 @@ export function Employee360() {
             </div>
             <div>
               <div className="flex items-center gap-3 mb-1">
+<<<<<<< HEAD
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{me?.name || "Employee"}</h1>
+=======
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Dominic S. Sterling</h1>
+>>>>>>> target/main
                 <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-emerald-100">ACTIVE</span>
               </div>
               <p className="text-slate-500 font-medium mb-3">Senior Financial Analyst — APAC Operations</p>
               <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+<<<<<<< HEAD
                 <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><Hash size={14} /> {me?._id?.slice(-8).toUpperCase() || "-"}</div>
                 <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><MapPin size={14} /> {typeof me?.department === "string" ? me?.department : me?.department?.name || "N/A"}</div>
+=======
+                <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><Hash size={14} /> EMP-20941</div>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"><MapPin size={14} /> Singapore Hub</div>
+>>>>>>> target/main
               </div>
             </div>
           </div>
@@ -129,7 +150,11 @@ export function Employee360() {
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 text-right">Efficiency Rating</p>
               <div className="flex items-baseline gap-2 justify-end">
+<<<<<<< HEAD
                 <h2 className="text-3xl font-black text-slate-900">{Math.min(100, Math.max(0, (totalHours / 160) * 100)).toFixed(1)}%</h2>
+=======
+                <h2 className="text-3xl font-black text-slate-900">94.2%</h2>
+>>>>>>> target/main
                 <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded">↑2.4</span>
               </div>
             </div>
@@ -165,6 +190,7 @@ export function Employee360() {
                </tr>
              </thead>
              <tbody className="text-sm">
+<<<<<<< HEAD
                {(latestSubmission?.activities || []).map((row, idx) => (
                  <tr key={`${row.activity?.name || row.customText || "row"}-${idx}`} className="border-b border-slate-100">
                    <td className="py-5 px-6 font-bold text-corporateBlue">Operational</td>
@@ -173,11 +199,35 @@ export function Employee360() {
                    <td className="py-5 px-6 text-right font-extrabold text-slate-900">{Number(row.totalHoursMonth || 0).toFixed(1)}</td>
                  </tr>
                ))}
+=======
+               <tr className="border-b border-slate-100">
+                 <td className="py-5 px-6 font-bold text-corporateBlue">Financial Reporting</td>
+                 <td className="py-5 px-6 text-slate-700 font-medium">Quarterly Consolidation</td>
+                 <td className="py-5 px-6 text-slate-500 italic">Inter-company reconciliations</td>
+                 <td className="py-5 px-6 text-right font-extrabold text-slate-900">18.5</td>
+               </tr>
+               <tr className="border-b border-slate-100">
+                 <td className="py-5 px-6 font-bold text-corporateBlue">Financial Reporting</td>
+                 <td className="py-5 px-6 text-slate-700 font-medium">Regulatory Filing</td>
+                 <td className="py-5 px-6 text-slate-500 italic">MAS compliance audit trail</td>
+                 <td className="py-5 px-6 text-right font-extrabold text-slate-900">12.0</td>
+               </tr>
+               <tr className="border-b border-white">
+                 <td className="py-5 px-6 font-bold text-corporateBlue">Business Planning</td>
+                 <td className="py-5 px-6 text-slate-700 font-medium">Budget Forecasting</td>
+                 <td className="py-5 px-6 text-slate-500 italic">Variance analysis modeling</td>
+                 <td className="py-5 px-6 text-right font-extrabold text-slate-900">9.5</td>
+               </tr>
+>>>>>>> target/main
              </tbody>
              <tfoot>
                <tr className="bg-blue-50/50 border-t border-slate-100">
                  <td colSpan={3} className="py-4 px-6 text-right text-xs font-bold text-corporateBlue tracking-widest uppercase">Total Weekly Hours</td>
+<<<<<<< HEAD
                  <td className="py-4 px-6 text-right text-lg font-black text-corporateBlue">{totalHours.toFixed(1)}</td>
+=======
+                 <td className="py-4 px-6 text-right text-lg font-black text-corporateBlue">40.0</td>
+>>>>>>> target/main
                </tr>
              </tfoot>
            </table>
@@ -202,7 +252,11 @@ export function Employee360() {
                </div>
             </div>
 
+<<<<<<< HEAD
             <div className="flex-1 overflow-auto">
+=======
+            <div className="flex-1 overflow-x-auto">
+>>>>>>> target/main
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase border-b border-slate-100 bg-slate-50">
